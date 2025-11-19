@@ -8,6 +8,7 @@ export default function ProteinForm() {
     unit: 'kg',
     activity: 'moderate',
     goal: 'maintenance',
+    archetype: 'auto',
     age: '',
     sex: 'other',
   })
@@ -70,6 +71,40 @@ export default function ProteinForm() {
     </div>
   )
 
+  const goalCopy = {
+    fat_loss: {
+      title: 'Cut & Reveal',
+      subtitle: 'Lean out while keeping strength',
+    },
+    maintenance: {
+      title: 'Stay Sharp',
+      subtitle: 'Perform, recover, and maintain',
+    },
+    muscle_gain: {
+      title: 'Build & Charge',
+      subtitle: 'Progressive overload meets recovery',
+    },
+  }
+
+  const archetypeOptions = [
+    { value: 'auto', label: 'Auto match', tagline: 'We’ll show all plans tuned to your goal' },
+    { value: 'Lifting Beast', label: 'Lifting Beast', tagline: 'Strength-focused with steady carbs' },
+    { value: 'Mat Dominator', label: 'Mat Dominator', tagline: 'Mat-ready power with leanness' },
+    { value: 'Track Rocket', label: 'Track Rocket', tagline: 'Explosive speed and fast fuel' },
+    { value: 'Grand Tour Engine', label: 'Grand Tour Engine', tagline: 'Endurance engine for long rides' },
+  ]
+
+  const getDisplayedSuggestions = () => {
+    if (!result || !Array.isArray(result.suggestions)) return []
+    const list = [...result.suggestions]
+    if (form.archetype && form.archetype !== 'auto') {
+      list.sort((a, b) => (a.name === form.archetype ? -1 : b.name === form.archetype ? 1 : 0))
+    }
+    return list
+  }
+
+  const displayed = getDisplayedSuggestions()
+
   return (
     <div className="grid md:grid-cols-2 gap-8">
       <form onSubmit={onSubmit} className="bg-slate-800/50 border border-blue-500/20 rounded-2xl p-6">
@@ -123,10 +158,32 @@ export default function ProteinForm() {
               onChange={onChange}
               className="w-full bg-slate-900/60 text-white rounded-lg px-3 py-2 border border-blue-500/30 focus:outline-none"
             >
-              <option value="fat_loss">Fat Loss</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="muscle_gain">Muscle Gain</option>
+              <option value="fat_loss">Cut & Reveal (Fat Loss)</option>
+              <option value="maintenance">Stay Sharp (Maintenance)</option>
+              <option value="muscle_gain">Build & Charge (Muscle Gain)</option>
             </select>
+            <div className="mt-1 text-xs text-blue-200/70">
+              {goalCopy[form.goal].title}: {goalCopy[form.goal].subtitle}
+            </div>
+          </div>
+
+          <div className="col-span-2">
+            <label className="block text-sm text-blue-200/80 mb-1">Archetype vibe</label>
+            <div className="grid sm:grid-cols-2 gap-2">
+              {archetypeOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, archetype: opt.value }))}
+                  className={`text-left bg-slate-900/60 border rounded-lg px-3 py-2 transition ${
+                    form.archetype === opt.value ? 'border-blue-500/60 ring-2 ring-blue-500/30' : 'border-blue-500/20'
+                  }`}
+                >
+                  <div className="text-white text-sm font-semibold">{opt.label}</div>
+                  <div className="text-blue-200/70 text-xs">{opt.tagline}</div>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -207,15 +264,20 @@ export default function ProteinForm() {
               {result.rationale}
             </p>
 
-            {Array.isArray(result.suggestions) && result.suggestions.length > 0 && (
+            {Array.isArray(displayed) && displayed.length > 0 && (
               <div className="mt-8">
                 <h3 className="text-white font-semibold text-lg mb-3">Archetypal meal plans</h3>
                 <div className="space-y-4">
-                  {result.suggestions.map((s, idx) => (
+                  {displayed.map((s, idx) => (
                     <div key={idx} className="bg-slate-900/50 rounded-xl p-4 border border-blue-500/20">
                       <div className="flex items-center justify-between mb-1">
                         <div>
-                          <div className="text-white font-semibold">{s.name}</div>
+                          <div className="text-white font-semibold flex items-center gap-2">
+                            {s.name}
+                            {form.archetype !== 'auto' && s.name === form.archetype && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-400 text-slate-900 font-semibold">Your pick</span>
+                            )}
+                          </div>
                           <div className="text-blue-200/70 text-sm">{s.tagline}</div>
                         </div>
                         <div className="text-blue-200/80 text-sm">~{s.macros.calories} kcal</div>
